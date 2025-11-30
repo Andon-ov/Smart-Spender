@@ -3,6 +3,9 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-na
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { COLORS, SPACING, FONT_SIZES } from '../../constants/theme';
+import { ocrSpaceService } from '../../services/ocrSpaceService';
+import DatabaseService from '../../services/database';
+import { Receipt, ReceiptItem } from '../../types';
 
 export default function ScannerScreen() {
   const [image, setImage] = useState<string | null>(null);
@@ -51,6 +54,96 @@ export default function ScannerScreen() {
     }
   };
 
+  const analyzeReceipt = async () => {
+    if (!image) return;
+
+    setIsProcessing(true);
+    try {
+      // Analyze with OCR.space API (free tier)
+      const result = await ocrSpaceService.analyzeReceipt(image);
+
+      // Convert OCR result to database format and save
+      if (result.storeName && result.total) {
+        const receipt: Receipt = {
+          shop_name: result.storeName,
+          date: result.date || new Date().toISOString().split('T')[0], // Use current date if not found
+          total_amount: result.total,
+          category: 'Храна', // Default category
+          image_uri: image,
+          items: result.items?.map(item => ({
+            product_name: item.productName,
+            quantity: item.quantity || 1,
+            unit_price: item.unitPrice || item.totalPrice,
+            total_price: item.totalPrice
+          }))
+        };
+
+        const receiptItems: ReceiptItem[] = result.items?.map(item => ({
+          product_name: item.productName,
+          quantity: item.quantity || 1,
+          unit_price: item.unitPrice || item.totalPrice,
+          total_price: item.totalPrice
+        })) || [];
+
+        try {
+          await DatabaseService.createReceipt(receipt, receiptItems);
+          console.log('Receipt saved successfully');
+        } catch (dbError) {
+          console.error('Error saving receipt:', dbError);
+          // Don't fail the whole process if saving fails
+        }
+      }
+
+      const message = [
+        result.storeName ? `🏪 Магазин: ${result.storeName}` : '',
+        result.date ? `📅 Дата: ${result.date}` : '',
+        result.total ? `💰 Обща сума: ${result.total} лв` : '',
+        result.items && result.items.length > 0 ? `🛒 Продукти: ${result.items.length}` : ''
+      ].filter(Boolean).join('\n');
+
+      const buttons = [
+        { text: 'OK', onPress: () => setImage(null) }
+      ];
+
+      // Add "View Products" button if we have items
+      if (result.items && result.items.length > 0) {
+        buttons.unshift({
+          text: 'Виж продукти',
+          onPress: () => {
+            const itemsText = result.items!.map((item, index) => {
+              let text = `${index + 1}. ${item.productName}`;
+              if (item.quantity && item.unitPrice) {
+                text += ` (${item.quantity} x ${item.unitPrice} лв = ${item.totalPrice} лв)`;
+              } else {
+                text += ` - ${item.totalPrice} лв`;
+              }
+              return text;
+            }).join('\n');
+
+            Alert.alert(
+              'Продукти',
+              itemsText,
+              [
+                { text: 'OK', onPress: () => setImage(null) }
+              ]
+            );
+          }
+        });
+      }
+
+      Alert.alert(
+        '✅ Анализ завършен',
+        message || 'Текстът е извлечен, но не е разпозната структурата на бележката',
+        buttons
+      );
+    } catch (error) {
+      console.error('Error analyzing receipt:', error);
+      Alert.alert('Грешка', `Неуспешно анализиране: ${error instanceof Error ? error.message : 'Неизвестна грешка'}`);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -91,6 +184,7 @@ export default function ScannerScreen() {
         <TouchableOpacity
           style={[styles.analyzeButton, isProcessing && styles.disabledButton]}
           disabled={isProcessing}
+          onPress={analyzeReceipt}
         >
           <Text style={styles.analyzeButtonText}>
             {isProcessing ? 'Обработка...' : 'Анализирай бележка'}
@@ -186,7 +280,8 @@ const styles = StyleSheet.create({
   analyzeButton: {
     backgroundColor: COLORS.primary,
     marginHorizontal: SPACING.lg,
-    marginBottom: SPACING.lg,
+    marginBottom: 80,
+
     padding: SPACING.lg,
     borderRadius: 12,
     alignItems: 'center',
