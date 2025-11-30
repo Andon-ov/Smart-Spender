@@ -50,7 +50,8 @@
         {
           "photosPermission": "Приложението има нужда от достъп до вашите снимки."
         }
-      ]
+      ],
+      "expo-barcode-scanner"
     ]
   }
 }

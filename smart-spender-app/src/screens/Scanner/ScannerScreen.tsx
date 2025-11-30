@@ -7,7 +7,7 @@ import { ocrSpaceService } from '../../services/ocrSpaceService';
 import DatabaseService from '../../services/database';
 import { Receipt, ReceiptItem } from '../../types';
 
-export default function ScannerScreen() {
+export default function ScannerScreen({ navigation }: any) {
   const [image, setImage] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -52,6 +52,10 @@ export default function ScannerScreen() {
     if (!result.canceled && result.assets[0]) {
       setImage(result.assets[0].uri);
     }
+  };
+
+  const scanQRCode = () => {
+    navigation.navigate('QRScanner');
   };
 
   const analyzeReceipt = async () => {
@@ -178,6 +182,11 @@ export default function ScannerScreen() {
           <Text style={styles.buttonIcon}>🖼️</Text>
           <Text style={styles.buttonText}>Избери от галерия</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity style={styles.button} onPress={scanQRCode}>
+          <Text style={styles.buttonIcon}>📱</Text>
+          <Text style={styles.buttonText}>Сканирай QR</Text>
+        </TouchableOpacity>
       </View>
 
       {image && (
@@ -253,13 +262,13 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: 'row',
     padding: SPACING.lg,
-    gap: SPACING.md,
+    gap: SPACING.sm,
     marginBottom: 100,
   },
   button: {
     flex: 1,
     backgroundColor: COLORS.surface,
-    padding: SPACING.lg,
+    padding: SPACING.md,
     borderRadius: 12,
     alignItems: 'center',
     shadowColor: '#000',

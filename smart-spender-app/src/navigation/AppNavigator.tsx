@@ -4,7 +4,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS } from '../constants/theme';
 
 import DashboardScreen from '../screens/Dashboard/DashboardScreen';
-import ScannerScreen from '../screens/Scanner/ScannerScreen';
+import ScannerNavigator from './ScannerNavigator';
 import HistoryScreen from '../screens/History/HistoryScreen';
 import StatisticsScreen from '../screens/Statistics/StatisticsScreen';
 import SettingsScreen from '../screens/Settings/SettingsScreen';
@@ -54,7 +54,7 @@ export default function AppNavigator() {
       />
       <Tab.Screen
         name="Scanner"
-        component={ScannerScreen}
+        component={ScannerNavigator}
         options={{
           tabBarLabel: 'Скенер',
           tabBarIcon: ({ color, size }) => (
