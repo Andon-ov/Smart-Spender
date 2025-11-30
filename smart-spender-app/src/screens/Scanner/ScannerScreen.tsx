@@ -1,0 +1,202 @@
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import * as ImagePicker from 'expo-image-picker';
+import { COLORS, SPACING, FONT_SIZES } from '../../constants/theme';
+
+export default function ScannerScreen() {
+  const [image, setImage] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const requestPermissions = async () => {
+    const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
+    const mediaLibraryPermission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    return cameraPermission.granted && mediaLibraryPermission.granted;
+  };
+
+  const takePhoto = async () => {
+    const hasPermission = await requestPermissions();
+    if (!hasPermission) {
+      Alert.alert('Разрешения', 'Необходими са разрешения за камера и галерия');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setImage(result.assets[0].uri);
+    }
+  };
+
+  const pickImage = async () => {
+    const hasPermission = await requestPermissions();
+    if (!hasPermission) {
+      Alert.alert('Разрешения', 'Необходими са разрешения за камера и галерия');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setImage(result.assets[0].uri);
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Сканирай бележка</Text>
+        <Text style={styles.subtitle}>Заснеми или избери снимка</Text>
+      </View>
+
+      {image ? (
+        <View style={styles.imageContainer}>
+          <Image source={{ uri: image }} style={styles.image} />
+          <TouchableOpacity
+            style={styles.clearButton}
+            onPress={() => setImage(null)}
+          >
+            <Text style={styles.clearButtonText}>Изчисти</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View style={styles.placeholderContainer}>
+          <Text style={styles.placeholderIcon}>📸</Text>
+          <Text style={styles.placeholderText}>Няма избрано изображение</Text>
+        </View>
+      )}
+
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity style={styles.button} onPress={takePhoto}>
+          <Text style={styles.buttonIcon}>📷</Text>
+          <Text style={styles.buttonText}>Заснеми</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.button} onPress={pickImage}>
+          <Text style={styles.buttonIcon}>🖼️</Text>
+          <Text style={styles.buttonText}>Избери от галерия</Text>
+        </TouchableOpacity>
+      </View>
+
+      {image && (
+        <TouchableOpacity
+          style={[styles.analyzeButton, isProcessing && styles.disabledButton]}
+          disabled={isProcessing}
+        >
+          <Text style={styles.analyzeButtonText}>
+            {isProcessing ? 'Обработка...' : 'Анализирай бележка'}
+          </Text>
+        </TouchableOpacity>
+      )}
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+  header: {
+    padding: SPACING.lg,
+  },
+  title: {
+    fontSize: FONT_SIZES.xxxl,
+    fontWeight: 'bold',
+    color: COLORS.text,
+    marginBottom: SPACING.xs,
+  },
+  subtitle: {
+    fontSize: FONT_SIZES.md,
+    color: COLORS.textSecondary,
+  },
+  imageContainer: {
+    flex: 1,
+    margin: SPACING.lg,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  image: {
+    flex: 1,
+    resizeMode: 'contain',
+  },
+  clearButton: {
+    position: 'absolute',
+    top: SPACING.md,
+    right: SPACING.md,
+    backgroundColor: COLORS.danger,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: 8,
+  },
+  clearButtonText: {
+    color: '#FFF',
+    fontWeight: 'bold',
+  },
+  placeholderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    margin: SPACING.lg,
+  },
+  placeholderIcon: {
+    fontSize: 64,
+    marginBottom: SPACING.md,
+  },
+  placeholderText: {
+    fontSize: FONT_SIZES.lg,
+    color: COLORS.textSecondary,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    padding: SPACING.lg,
+    gap: SPACING.md,
+    marginBottom: 100,
+  },
+  button: {
+    flex: 1,
+    backgroundColor: COLORS.surface,
+    padding: SPACING.lg,
+    borderRadius: 12,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  buttonIcon: {
+    fontSize: 32,
+    marginBottom: SPACING.sm,
+  },
+  buttonText: {
+    fontSize: FONT_SIZES.md,
+    fontWeight: '600',
+    color: COLORS.text,
+  },
+  analyzeButton: {
+    backgroundColor: COLORS.primary,
+    marginHorizontal: SPACING.lg,
+    marginBottom: SPACING.lg,
+    padding: SPACING.lg,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  disabledButton: {
+    backgroundColor: COLORS.textLight,
+  },
+  analyzeButtonText: {
+    color: '#FFF',
+    fontSize: FONT_SIZES.lg,
+    fontWeight: 'bold',
+  },
+});

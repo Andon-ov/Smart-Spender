@@ -1,0 +1,56 @@
+{
+  "expo": {
+    "name": "Smart Spender",
+    "slug": "smart-spender-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#6366F1"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.smartspender.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Това приложение използва камерата за сканиране на касови бележки",
+        "NSPhotoLibraryUsageDescription": "Това приложение използва галерията за избор на снимки на бележки"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#6366F1"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "package": "com.smartspender.app",
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-sqlite",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Разрешете на $(PRODUCT_NAME) да използва камерата."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Приложението има нужда от достъп до вашите снимки."
+        }
+      ]
+    ]
+  }
+}
